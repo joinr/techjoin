@@ -16,7 +16,7 @@
 
 (defn customers []
   (for [i (range 100000)]
-    (let [city   (str (rand 10))]
+    (let [city   (str (rand-int 10))]
       {:address    (str "Address" i)
        :gender     (rand-nth ["m" "f" "n"])
        :address-id i
@@ -24,9 +24,11 @@
        :first-name (str "customer_" i "first")
        :last-name  (str "customer_" i "last")
        :city       city
-       :zip-code   (str (repeat 5 city))
+       :zip-code   (clojure.string/join (repeat 5 city))
        :email      (str "customer_" i "@the-net")
-       :huge-field (str "this is a huge field containing a lot of dumb info for bloat" i)})))
+       :huge-field (str "this is a huge field containing a lot of dumb info for
+       bloat which will make the file so much larger for our poor machine how
+       unkind of us to do so in this day and age" i)})))
 
 (def rhs-fields
   [:operator-id
@@ -83,9 +85,9 @@
 ;;If you've already generated your stuff...
 ;;we have files locally we can read.
 
-;;fast 172ms
+;;fast 214ms
 (def lhs (ds/->dataset "lhs.csv"))
-;;fast 911ms
+;;fast 736ms
 (def rhs (ds/->dataset "rhs.csv"))
 
 ;;this is fast and handled quickly (makes sense since I think we are computing
