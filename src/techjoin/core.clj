@@ -44,7 +44,11 @@
   (for [i (range 165000)]
     {:size           (rand-nth ["s" "m" "l"])
      :day            (str (rand-int 100000))
-     :operator-id    (str (rand-int 10000))}))
+     :operator-id    (str (rand-int 10000))
+     :notes          "THis is some bloated information we'll add in"
+     :more-notes     "to make the table larger"
+     :even-more-notes "Also this will make things big as well"
+     :how-can-there-be-more "Yet another text field will add overhead jabroni"}))
 
 (defn random-rhs []
   (let [cs  (vec (customers))]
@@ -53,7 +57,8 @@
         (assoc c :operator-id (rand-int 10000))))))
 
 (defn spit-tables []
-  (tbl/records->file (random-lhs) "lhs.csv" :sep "," :field-order [:size :day :operator-id])
+  (tbl/records->file (random-lhs) "lhs.csv" :sep ","
+      :field-order [:size :day :operator-id :notes :more-notes :even-more-notes :how-can-there-be-more])
   (tbl/records->file (random-rhs) "rhs.csv" :sep "," :field-order rhs-fields))
 
 ;; rhs - 180,000 rows -
@@ -78,17 +83,16 @@
 ;;If you've already generated your stuff...
 ;;we have files locally we can read.
 
-;;fast
+;;fast 172ms
 (def lhs (ds/->dataset "lhs.csv"))
-;;fast
+;;fast 911ms
 (def rhs (ds/->dataset "rhs.csv"))
 
-
 ;;this is fast and handled quickly (makes sense since I think we are computing
-;;the join solely in index space)
+;;the join solely in index space) (about 2s)
 (def res (ds/join-by-column "operator-id" lhs rhs))
 
-;;slow (~90s on my hardware)
+;;slow (~131s on my hardware)
 ;;I think we are realizing the joined rows as we go,
 ;;and we are creating a lot of intermediate vectors and doing
 ;;a lot of hashmap lookups in data.csv (according to profiling).
@@ -99,7 +103,7 @@
 
 ;;reducer-based record traversal is ~4-5x faster than
 ;;default data.csv based variant above.
-(tbl/records->file (ds/mapseq-reader res)  "test.tsv" :sep \tab))
+(tbl/records->file (ds/mapseq-reader res)  "test.tsv" :sep \tab)
 
 (comment
   ;;curious to see how this works out.
