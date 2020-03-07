@@ -3,6 +3,7 @@
 ;;extensions for the tech.tablesaw.columns.Column class.
 (ns techjoin.subcolumn
   (:require [tech.v2.datatype.base :as base]
+            [tech.v2.datatype.typecast :as typecast]
             [tech.v2.datatype :as dtype]
             [tech.v2.datatype.protocols :as dtype-proto]
             [tech.v2.datatype.casting :as casting]
@@ -375,6 +376,35 @@
 ;; :idx_subcolumn68802
 ;; [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, ]
 )
+
+(defn join-by-column
+  "Join by column.  For efficiency, lhs should be smaller than rhs as it is sorted
+  in memory. Uses subcolumns to operate in index space without building intermediate
+  columns."
+  [colname lhs rhs & {:keys [error-on-missing?]}]
+  (let [idx-groups (ds/group-by-column->indexes colname lhs)
+        rhs-col (typecast/datatype->reader :object (rhs colname))
+        lhs-indexes (LongArrayList.)
+        rhs-indexes (LongArrayList.)
+        n-elems (dtype/ecount rhs-col)]
+    ;;This would have to be parallelized and thus have a separate set of indexes
+    ;;that were merged later in order to really be nice.  tech.datatype has no
+    ;;parallized operation that will result in this.
+    (loop [idx 0]
+      (when (< idx n-elems)
+        (if-let [^LongArrayList item (get idx-groups (.read rhs-col idx))]
+          (do
+            (dotimes [n-iters (.size item)] (.add rhs-indexes idx))
+            (.addAll lhs-indexes item))
+          (when error-on-missing?
+            (throw (Exception. (format "Failed to find column value %s"
+                                       (.read rhs-col idx))))))
+        (recur (unchecked-inc idx))))
+    (let [lhs-cols (->> (ds/columns lhs)
+                        (map #(subset % lhs-indexes)))
+          rhs-cols (->> (ds/columns (ds/remove-column rhs colname))
+                        (map #(subset % rhs-indexes)))]
+      (tech.ml.dataset.base/from-prototype lhs "join-table" (concat lhs-cols rhs-cols)))))
 
 
 ;;Original proof of concept submap with a hashmap.
