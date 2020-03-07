@@ -163,7 +163,7 @@
                   (dtype-pp/print-reader-data))))))
 
 
-#_(defmethod print-method TablesawColumn
+(defmethod print-method TablesawColumn
   [col ^java.io.Writer w]
   (.write w (.toString ^Object col)))
 

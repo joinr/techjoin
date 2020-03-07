@@ -11,7 +11,9 @@
             [tech.ml.utils :refer [column-safe-name]]
             [tech.jna :as jna]
             [tech.libs.tablesaw.tablesaw-column :as tc]
-            [tech.v2.datatype.pprint :as dtype-pp])
+            [tech.v2.datatype.pprint :as dtype-pp]
+            ;;temporary for get-column-value
+            [techjoin.patch])
   (:import [tech.tablesaw.api ShortColumn IntColumn LongColumn
             FloatColumn DoubleColumn StringColumn BooleanColumn
             NumericColumn]
@@ -397,10 +399,26 @@
   ([c name idxs]
    (subcolumn. c name (->selection idxs)))
   ([c idxs] (subset c (keyword (str (name (col-proto/column-name c)) "_" (gensym "subcolumn"))) idxs)))
+
 ;;testing
+(comment 
 (require '[tech.ml.dataset :as ds])
 
 (def the-data
   (ds/->dataset
    (for [[i k] (map-indexed vector (seq "abcdefghijklmnopqrstuvwzyz"))]
      {:idx i :letter (str k) :square (* i 2)})))
+
+(def c1 (ds/column the-data :idx))
+;; #tablesaw-column<int16>[26]
+;; :idx
+;; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ...]
+(def sub2 (subset c1 (filter even? (range 20))))
+;; #subcolumn<null>[10]
+;; :idx_subcolumn68801
+;; [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, ]
+(def sub3 (subset c1 (filter odd? (range 20))))
+;; #subcolumn<null>[10]
+;; :idx_subcolumn68802
+;; [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, ]
+)
