@@ -76,24 +76,8 @@
 ;;[0     3]     -> mask 2 [(nth mask1 0) (nth mask1 3)]
 ;;[0]           -> mask 3 [(nth mask2 0)]
 
-
-;; (sub-map [0 1 2 3 4 5] [0 1 3 5]) =>
-;; sm {:origin [0 1 2 3 4 5] :selection [0 1 3 5]}
-;; (seq sm) => (map #(.get origin %) (:selection sm))
-;; (nth sm idx) => (.get origin (.get (:selection sm idx)) 
-
-(defmacro extend-masked-subset [coltype column-get]
-  (extend-protocol ~'techjoin.subcolumn/IMaskedSubset
-    ~coltype
-    (masked-subset [this# idxs# mask#]
-      (let [visibles# (select-and! (->selection idxs#) mask#)
-            ~c (.emptyCopy this#)]
-        (doseq [idx# visibles#]
-          (.append ~c (~column-get ~c (int idx#)))
-          )
-        ~c))))
-
 (defprotocol ISubMap
+  ;;sub-get is probably not needed, but it's used in the general case.
   (sub-get  [this  idx]
     "Look up the local idx in sub-map transforming via its
      selection mask")
@@ -130,37 +114,6 @@
              (.get mask n)
              (throw (ex-info "index out of range!" {:n n})))))
        idxs))
-
-
-;;going to assume this is a finite map.  So, the indices
-;;defined by idxs are a bounded range, rather than an open interval
-;;of indices.  That is, we expect projections to be a subset
-;;of the existing indices.
-(comment
- ;;proof of concept built with a normal clojure hashmap.
-
-  ;;get already taken, I'm lazy.
-  (defn lookup [m k]
-    (if (map? m) (get m k)
-        (sub-get m k)))
-
-(deftype subintmap [original ^BitmapBackedSelection idxs]
-  ISubMap
-  (sub-get  [this  idx]
-    (lookup original (.get idxs (int idx))))
-  (sub-vals [this]
-    (for [n (range (.size idxs))]
-      (lookup this n)))
-  (sub-keys [this ]
-    (when (pos? (.size idxs))
-                (range (.size idxs))))
-  (sub-mask [this]   idxs)
-  (project  [this new-idxs]
-    (subintmap. this  (->selection new-idxs)))
-  (invert   [this xs] (invert-default this idxs xs)))
-)
-
-
 
 ;;subcolumn implementation.  This should establish most of
 ;;the features of the normal tablesaw column, except
@@ -422,3 +375,34 @@
 ;; :idx_subcolumn68802
 ;; [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, ]
 )
+
+
+;;Original proof of concept submap with a hashmap.
+
+;;going to assume this is a finite map.  So, the indices
+;;defined by idxs are a bounded range, rather than an open interval
+;;of indices.  That is, we expect projections to be a subset
+;;of the existing indices.
+(comment
+  ;;proof of concept built with a normal clojure hashmap.
+
+  ;;get already taken, I'm lazy.
+  (defn lookup [m k]
+    (if (map? m) (get m k)
+        (sub-get m k)))
+
+  (deftype subintmap [original ^BitmapBackedSelection idxs]
+    ISubMap
+    (sub-get  [this  idx]
+      (lookup original (.get idxs (int idx))))
+    (sub-vals [this]
+      (for [n (range (.size idxs))]
+        (lookup this n)))
+    (sub-keys [this ]
+      (when (pos? (.size idxs))
+        (range (.size idxs))))
+    (sub-mask [this]   idxs)
+    (project  [this new-idxs]
+      (subintmap. this  (->selection new-idxs)))
+    (invert   [this xs] (invert-default this idxs xs)))
+  )
