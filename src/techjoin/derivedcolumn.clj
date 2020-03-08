@@ -68,7 +68,7 @@
   (is-column? [this] true)
   col-proto/PColumn
   (column-name [this]         (or name (col-proto/column-name col)))
-  (set-name [this colname]    (subcolumn. col name idxs))
+  (set-name [this colname]    (derivedcolumn. col name idxs))
   (supported-stats [this]     tc/available-stats)
   ;;this porbably isn't implemented correctly.
   (metadata [this] {:name     (col-proto/column-name this)
@@ -244,8 +244,8 @@
   (toString [this]
     (let [n-items (dtype/ecount this)
           format-str (if (> n-items 20)
-                       "#subcolumn<%s>%s\n%s\n[%s...]"
-                       "#subcolumn<%s>%s\n%s\n[%s]")]
+                       "#derivedcolumn<%s>%s\n%s\n[%s...]"
+                       "#derivedcolumn<%s>%s\n%s\n[%s]")]
       (format format-str
               (name (dtype/get-datatype col))
               [n-items]
@@ -332,15 +332,15 @@
 ;; :idx
 ;; [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ...]
 (def sub2 (subset c1 (filter even? (range 20))))
-;; #subcolumn<null>[10]
-;; :idx_subcolumn68801
+;; #derivedcolumn<null>[10]
+;; :idx_derivedcolumn68801
 ;; [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, ]
 (def sub3 (subset c1 (filter odd? (range 20))))
-;; #subcolumn<null>[10]
-;; :idx_subcolumn68802
+;; #derivedcolumn<null>[10]
+;; :idx_derivedcolumn68802
 ;; [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, ]
 ;;(join-by-column :letter lhs rhs)  ;;should get 52...
-;; techjoin.subcolumn> (join-by-column :letter lhs rhs)
+;; techjoin.derivedcolumn> (join-by-column :letter lhs rhs)
 ;; join-table [52 6]:
 
 ;; | :idx | :letter | :square | :ridx | :capitalized | :doubled |

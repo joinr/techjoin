@@ -2,7 +2,7 @@
   (:require [spork.util [table :as tbl]]
             [tech.ml.dataset :as ds]
             [tech.io :as io]
-            [techjoin.derived :as derived]
+            [techjoin.derivedcolumn :as derived]
             [tech.libs.tablesaw :as tablesaw]
             [tech.v2.datatype.functional :as dfn]
             [tech.ml.dataset.pipeline :as dsp]
