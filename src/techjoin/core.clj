@@ -2,7 +2,7 @@
   (:require [spork.util [table :as tbl]]
             [tech.ml.dataset :as ds]
             [tech.io :as io]
-            [techjoin.subcolumn :as subcol]
+            [techjoin.derived :as derived]
             [tech.libs.tablesaw :as tablesaw]
             [tech.v2.datatype.functional :as dfn]
             [tech.ml.dataset.pipeline :as dsp]
@@ -94,8 +94,8 @@
 ;;this is fast and handled quickly (makes sense since I think we are computing
 ;;the join solely in index space) (about 2s)
 (def res (ds/join-by-column "operator-id" lhs rhs))
-;;testing with new subcolumn.
-(def res2 (subcol/join-by-column "operator-id" lhs rhs))
+;;testing with new derivedcolumn.
+(def res2 (derived/join-by-column "operator-id" lhs rhs))
 
 ;;slow (~131s on my hardware)
 ;;I think we are realizing the joined rows as we go,
